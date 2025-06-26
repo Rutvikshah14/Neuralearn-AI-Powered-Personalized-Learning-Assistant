@@ -1,0 +1,8 @@
+anthropic>=0.40.0
+beautifulsoup4>=4.12.3
+Flask>=3.1.0
+nh3>=0.2.18
+python-dotenv>=1.0.1
+termcolor>=2.5.0
+python-docx>=0.8.10
+PyPDF2>=3.0.0
