@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neuralearn: Select a Student</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+    /* Base */
+    body { margin:0; font-family:'Montserrat',sans-serif; background:linear-gradient(135deg,#e0e7ff,#fdfbfb); display:flex; flex-direction:column; min-height:100vh; }
+    .container { max-width:1200px; margin:0 auto; padding: 1rem; }
+    /* Header */
+    header { background:linear-gradient(90deg,#667eea,#764ba2); padding:1.5rem 0; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
+    header .container { display:flex; justify-content:space-between; align-items:center; }
+    header h1 { color:#fff; font-size:2rem; letter-spacing:1px; }
+    header a { background:#ff6b6b; color:#fff; padding:0.75rem 1.25rem; border-radius:50px; font-weight:700; text-decoration:none; transition:transform .3s,background .3s; }
+    header a:hover { background:#ee5253; transform:scale(1.05); }
+    /* Cards Grid */
+    main { flex:1; padding:3rem 0; }
+    .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:2rem; }
+    .card { background:#fff; border-radius:1rem; padding:1.5rem; box-shadow:0 8px 24px rgba(0,0,0,0.1); overflow:hidden; position:relative; transform:translateY(20px); opacity:0; animation:fadeUp .6s forwards; }
+    .card:nth-child(1) { animation-delay:0.1s; }
+    .card:nth-child(2) { animation-delay:0.2s; }
+    .card:nth-child(3) { animation-delay:0.3s; }
+    .card:nth-child(4) { animation-delay:0.4s; }
+    @keyframes fadeUp { to { transform:translateY(0); opacity:1; } }
+    .card-title { font-size:1.5rem; font-weight:700; color:#333; text-decoration:none; display:block; margin-bottom:1rem; }
+    .delete-btn { position:absolute; top:1rem; right:1rem; background:rgba(255,71,87,0.1); color:#ff4757; border:none; border-radius:50%; width:2rem; height:2rem; cursor:pointer; transition:background .3s,transform .3s; }
+    .delete-btn:hover { background:rgba(232,65,24,0.2); transform:rotate(20deg); }
+    /* Footer */
+    footer { background:#fff; text-align:center; padding:1rem 0; font-size:0.875rem; color:#666; border-top:1px solid #e1e8ed; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container" style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center;">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Neuralearn Logo" style="height: 100px; margin-right: 40px;">
+        <h1>Neuralearn</h1>
+      </div>
+      <a href="{{ url_for('new_student') }}">+ Add Student</a>
+    </div>
+  </header>
+  <main class="container">
+    {% if students %}
+    <div class="cards-grid">
+      {% for student in students %}
+      <div class="card">
+        <a href="{{ url_for('select_student', student_name_safe=student) }}" class="card-title">{{ student }}</a>
+        <a href="{{ url_for('delete_student', student_name=student|lower) }}" onclick="return confirm('Delete {{ student }}?');" class="delete-btn">
+          &times;
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="text-align:center; font-size:1.125rem; color:#555;">No students found. Click “+ Add Student” above to get started.</p>
+    {% endif %}
+  </main>
+  <footer>&copy; <span id="year"></span> Neuralearn. All rights reserved.</footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var yearEl = document.getElementById('year');
+      if (yearEl) {
+        yearEl.textContent = new Date().getFullYear();
+      }
+    });
+  </script>
+</body>
+</html>

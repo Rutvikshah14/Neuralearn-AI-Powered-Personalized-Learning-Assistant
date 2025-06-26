@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat: {{ student_name_safe }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+  <style>
+    body { margin:0; display:flex; flex-direction:column; height:100vh; font-family:'Montserrat',sans-serif; background:#f5f7ff; }
+    header { background:#667eea; color:#fff; padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+    header h1 { font-size:1.25rem; margin:0; }
+    header button, header a { background:#ff6b6b; color:#fff; padding:.5rem 1rem; border:none; border-radius:.75rem; font-weight:600; transition:transform .3s; }
+    header button:hover, header a:hover { transform:scale(1.05); }
+    nav { display:flex; background:#fff; border-bottom:1px solid #e2e8f0; }
+    nav button { flex:1; padding:.75rem; border:none; background:none; cursor:pointer; font-weight:600; color:#4a5568; transition:background .3s; }
+    nav button.active { background:#e0e7ff; color:#2d3748; }
+    #chatContent, #lessonPlanContent, #pastChatsContent { flex:1; overflow:auto; padding:1rem 2rem; }
+    .message { background:#fff; padding:1rem; border-radius:0.75rem; margin-bottom:1rem; box-shadow:0 2px 6px rgba(0,0,0,0.05); position:relative; transform:scale(.97); opacity:0; animation:popIn .4s forwards; }
+    .message.assistant { border-left:4px solid #667eea; }
+    .message.user { border-left:4px solid #ff6b6b; align-self:flex-end; }
+    @keyframes popIn { to { transform:scale(1); opacity:1; } }
+    .speaker { position:absolute; top:.5rem; right:.75rem; cursor:pointer; opacity:.7; transition:opacity .3s; }
+    .speaker:hover { opacity:1; }
+    footer { background:#fff; padding:1rem 2rem; display:flex; align-items:center; gap:1rem; border-top:1px solid #e2e8f0; }
+    footer button#uploadButton { background:#e2e8f0; border:none; padding:.5rem; border-radius:.75rem; cursor:pointer; transition:background .3s; }
+    footer button#uploadButton:hover { background:#cbd5e0; }
+    footer input[type=file] { display:none; }
+    footer textarea#messageInput { flex:1; padding:.75rem; border:2px solid #cbd5e0; border-radius:.75rem; resize:none; transition:border .3s; }
+    footer textarea#messageInput:focus { border-color:#667eea; outline:none; }
+    footer button.send { background:linear-gradient(90deg,#667eea,#764ba2); color:#fff; padding:.5rem 1rem; border:none; border-radius:.75rem; font-weight:600; transition:transform .3s; }
+    footer button.send:hover { transform:scale(1.05); }
+    #loadingOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:50; align-items:center; justify-content:center; }
+    #loadingOverlay .loader { background:#fff; padding:1rem 1.5rem; border-radius:.75rem; display:flex; align-items:center; gap:.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    #loadingOverlay .loader img { width:1.5rem; height:1.5rem; animation:spin 1s linear infinite; }
+    @keyframes spin { from{transform:rotate(0);} to{transform:rotate(360deg);} }
+  </style>
+</head>
+<body>
+  <div id="loadingOverlay"><div class="loader"><img src="{{ url_for('static', filename='images/circles.svg') }}" alt="Loading"><span>Thinking...</span></div></div>
+  <header>
+    <h1>Chat with {{ student_name_safe }}</h1>
+    <div>
+      <form id="newChatForm" method="POST"style="display: inline-block; margin-right: 8px;"><input type="hidden" name="action" value="new_chat"><button type="submit">New Chat</button></form>
+      <a href="/">Home</a>
+    </div>
+  </header>
+  <nav>
+    <button id="chatTab" class="active">Chat</button>
+    <button id="lessonPlanTab">Lesson Plan</button>
+    <button id="pastChatsTab">History</button>
+  </nav>
+  <div class="flex-1 relative flex flex-col">
+    <div id="chatContent">
+      {% for msg in chat_messages %}
+      <div class="message {{ msg.role }}">
+        <div class="speaker" onclick="speak(this)">&#128266;</div>
+        <div class="message-content">{{ msg.content|safe }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div id="lessonPlanContent" class="hidden"><pre>{{ lesson_plan }}</pre></div>
+    <div id="pastChatsContent" class="hidden">
+      {% for msg in prior_chat_messages %}
+      <div class="message {{ msg.role }}"><div class="message-content">{{ msg.content|safe }}</div></div>
+      {% endfor %}</div>
+  </div>
+  <footer>
+    <button id="uploadButton">📎</button>
+    <form id="messageForm" method="POST" enctype="multipart/form-data" class="flex-1 flex">
+      <input type="file" id="fileInput" name="uploaded_file" accept=".txt,.md,.pdf,.docx">
+      <textarea id="messageInput" name="user_input" rows="1" required placeholder="Type your message..."></textarea>
+      <button type="submit" class="send">Send</button>
+    </form>
+  </footer>
+  <script>
+    ['chat','lessonPlan','pastChats'].forEach(tab=>document.getElementById(tab+'Tab').addEventListener('click',()=>{['chat','lessonPlan','pastChats'].forEach(t=>{document.getElementById(t+'Content').classList.add('hidden');document.getElementById(t+'Tab').classList.remove('active');});document.getElementById(tab+'Content').classList.remove('hidden');document.getElementById(tab+'Tab').classList.add('active');}));
+    document.getElementById('uploadButton').onclick=()=>document.getElementById('fileInput').click();
+    document.getElementById('fileInput').addEventListener('change',()=>{document.getElementById('loadingOverlay').style.display='flex'; document.getElementById('messageForm').submit();});
+    const ta=document.getElementById('messageInput');ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,200)+'px';});
+    function speak(btn){const t=btn.parentElement.querySelector('.message-content').innerText;window.speechSynthesis.cancel();window.speechSynthesis.speak(new SpeechSynthesisUtterance(t));}
+    window.onload=()=>{const c=document.getElementById('chatContent');c.scrollTop=c.scrollHeight;};
+  </script>
+</body>
+</html>
